@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>아쿠아리움</title>
+    <style>
+        body {
+            background: #87CEEB; /* 하늘색 배경 */
+            overflow: hidden; /* 스크롤바 숨기기 */
+        }
+        canvas {
+            background: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuEDOk00o847wX-EXvVXcZWcZuYuzFQzGsxA&s'); /* 아쿠아리움 배경 이미지 */
+            background-size: cover;
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" width="800" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const balls = [];
+        const maxBalls = 100;
+        let mouseX = 0;
+        let mouseY = 0;
+        let isMouseDown = false;
+
+        class Fish {
+            constructor(x, y, size) {
+                this.x = x;
+                this.y = y;
+                this.size = size;
+                this.dy = Math.random() * -5 - 2; // 위로 튀어오르는 속도
+                this.dx = 0; // 수평 속도 초기화
+                this.gravity = 0.2; // 중력
+            }
+
+            update() {
+                this.dy += this.gravity; // 중력 적용
+                this.y += this.dy;
+                this.x += this.dx; // 수평 이동 추가
+
+                // 바닥에 닿으면 랜덤한 방향으로 튀기
+                if (this.y + this.size > canvas.height) {
+                    this.y = canvas.height - this.size;
+                    this.dy = Math.random() * -5 - 2; // 랜덤한 위로 튀어오르는 속도
+                    this.dx = (Math.random() - 0.5) * 10; // 랜덤한 수평 속도
+                }
+
+                // 마우스와 충돌 감지
+                const distX = this.x - mouseX;
+                const distY = this.y - mouseY;
+                const distance = Math.sqrt(distX * distX + distY * distY);
+
+                if (distance < this.size) {
+                    this.dx = (this.x < mouseX ? -5 : 5); // 마우스 방향으로 튕기기
+                    this.dy = Math.random() * -5 - 2; // 랜덤한 위로 튀어오르는 속도
+                }
+
+                // 마우스 클릭 시 물고기 끌어오기
+                if (isMouseDown && distance < 100) {
+                    this.dx = (mouseX - this.x) * 0.1; // 마우스 방향으로 끌어오기
+                    this.dy = (mouseY - this.y) * 0.1;
+                }
+
+                // 화면 경계 설정
+                if (this.x < this.size) this.x = this.size;
+                if (this.x > canvas.width - this.size) this.x = canvas.width - this.size;
+                if (this.y < this.size) this.y = this.size;
+                if (this.y > canvas.height - this.size) this.y = canvas.height - this.size;
+            }
+
+            draw() {
+                ctx.font = `${this.size}px Arial`;
+                ctx.fillText('🐟', this.x, this.y); // 물고기 이모지 그리기
+            }
+        }
+
+        function createFish() {
+            for (let i = 0; i < maxBalls; i++) {
+                const x = canvas.width / 2;
+                const y = canvas.height / 2;
+                const size = 30; // 물고기 크기
+                balls.push(new Fish(x, y, size));
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            balls.forEach(fish => {
+                fish.update();
+                fish.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        // 마우스 위치 추적
+        canvas.addEventListener('mousemove', (event) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = event.clientX - rect.left;
+            mouseY = event.clientY - rect.top;
+        });
+
+        // 마우스 클릭 이벤트
+        canvas.addEventListener('mousedown', () => {
+            isMouseDown = true;
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isMouseDown = false;
+        });
+
+        createFish();
+        animate();
+    </script>
+</body>
+</html>
